@@ -101,9 +101,10 @@ def get_linux_data(ip, usr, pwd):
         linux = ml.GetLinuxData(base_url, username, secret, ip, ssh_port, timeout, usr, pwd, use_key_file, key_file,
                                 get_serial_info, add_hdd_as_device_properties, add_hdd_as_parts,
                                 get_hardware_info, get_os_details, get_cpu_info, get_memory_info,
-                                ignore_domain, upload_ipv6, give_hostname_precedence, debug)
+                                ignore_domain, upload_ipv6, give_hostname_precedence, get_dv_install_info, debug)
 
         data = linux.main()
+	print "value debug: %s" % debug
         if debug:
             lock.acquire()
             print '\nLinux data: '
@@ -114,7 +115,8 @@ def get_linux_data(ip, usr, pwd):
             return data
         else:
             # Upload -----------
-            upload(data)
+            # upload(data)
+	    print data
 
 
 def get_solaris_data(ip, usr, pwd):
@@ -131,7 +133,8 @@ def get_solaris_data(ip, usr, pwd):
             return data
         else:
             # Upload -----------
-            upload(data)
+            #upload(data)
+	    print data
 
 
 def get_mac_data(ip, usr, pwd):
@@ -152,7 +155,8 @@ def get_mac_data(ip, usr, pwd):
             return data
         else:
             # Upload -----------
-            upload(data)
+            # upload(data)
+	    print data
 
 
 def get_freebsd_data(ip, usr, pwd):
@@ -169,8 +173,8 @@ def get_freebsd_data(ip, usr, pwd):
             return data
         else:
             # Upload -----------
-            upload(data)
-
+            # upload(data)
+	    print data
 
 def get_openbsd_data(ip, usr, pwd):
     if mod_bsd:
@@ -186,8 +190,8 @@ def get_openbsd_data(ip, usr, pwd):
             return data
         else:
             # Upload -----------
-            upload(data)
-
+            # upload(data)
+	    print data
 
 def get_aix_data(ip, usr, pwd):
     if mod_aix:
@@ -203,8 +207,8 @@ def get_aix_data(ip, usr, pwd):
             return data
         else:
             # Upload -----------
-            upload(data)
-
+            # upload(data)
+	    print data
 
 def process_data(data_out, ip, usr, pwd):
     msg = str(data_out).lower()
@@ -343,6 +347,7 @@ def main():
     sock.settimeout(float(timeout))
     msg = '\r\n[!] Running %s threads.' % THREADS
     print msg
+    print targets
     # parse IP address [single, range or CIDR]
     if targets:
         ipops = ipop.IPOperations(targets)
@@ -387,6 +392,8 @@ def main():
 
                 msg = '\n[!] Done!'
                 print msg
+    else:
+        print "some Error"
 
 
 if __name__ == '__main__':
@@ -394,6 +401,6 @@ if __name__ == '__main__':
 
     main()
     sys.exit()
-else:
+#else:
     # you can use dict_output if called from external script (starter.py)
-    from module_shared import *
+    #from module_shared import *

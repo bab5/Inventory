@@ -52,12 +52,13 @@ def get_settings():
     debug = cc.getboolean('options', 'debug')
     threads = cc.get('options', 'threads')
     dict_output = cc.getboolean('options', 'dict_output')
+    get_dv_install_info = cc.getboolean('options', 'get_dv_install_info')
 
     return mod_linux, mod_solaris, mod_mac, mod_bsd, mod_aix, base_url, username, secret, targets, exclude_ips,\
         use_key_file, key_file, credentials, ssh_port, timeout, get_serial_info, duplicate_serials,\
         add_hdd_as_device_properties, add_hdd_as_parts, get_hardware_info, get_os_details, get_cpu_info,\
         get_memory_info, ignore_domain, upload_ipv6, debug, threads, dict_output, give_hostname_precedence,\
-        remove_stale_ips
+        remove_stale_ips, get_dv_install_info
 
 
 # noinspection PyProtectedMember
@@ -67,7 +68,7 @@ if caller == 'main.py':
     mod_linux, mod_solaris, mod_mac, mod_bsd, mod_aix, base_url, username, secret, targets, exclude_ips, use_key_file,\
         key_file, credentials, ssh_port, timeout, get_serial_info, duplicate_serials, add_hdd_as_device_properties,\
         add_hdd_as_parts, get_hardware_info, get_os_details, get_cpu_info, get_memory_info, ignore_domain,\
-        upload_ipv6, debug, THREADS, DICT_OUTPUT, give_hostname_precedence, REMOVE_STALE_IPS = get_settings()
+        upload_ipv6, debug, THREADS, DICT_OUTPUT, give_hostname_precedence, get_dv_install_info, REMOVE_STALE_IPS = get_settings()
 
     ssh_port = int(ssh_port)
     timeout = int(timeout)
@@ -77,7 +78,7 @@ else:
         mod_linux, mod_solaris, mod_mac, mod_bsd, mod_aix, base_url, username, secret, xtargets, xexclude_ips,\
             xuse_key_file, xkey_file, xcredentials, ssh_port, timeout, get_serial_info, duplicate_serials,\
             add_hdd_as_device_properties, add_hdd_as_parts, get_hardware_info, get_os_details, get_cpu_info,\
-            get_memory_info, ignore_domain, upload_ipv6, debug, THREADS, DICT_OUTPUT, give_hostname_precedence,\
+            get_memory_info, ignore_domain, upload_ipv6, debug, THREADS, DICT_OUTPUT, get_dv_install_info, give_hostname_precedence,\
             REMOVE_STALE_IPS = get_settings()
 
         ssh_port = int(ssh_port)

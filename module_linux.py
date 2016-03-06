@@ -8,7 +8,7 @@ class GetLinuxData:
     def __init__(self, base_url, username, secret, ip, ssh_port, timeout, usr, pwd, use_key_file, key_file,
                  get_serial_info, add_hdd_as_device_properties, add_hdd_as_parts,
                  get_hardware_info, get_os_details, get_cpu_info, get_memory_info,
-                 ignore_domain, upload_ipv6, give_hostname_precedence, debug):
+                 ignore_domain, upload_ipv6, give_hostname_precedence, get_dv_install_info, debug):
 
         self.d42_api_url = base_url
         self.d42_username = username
@@ -56,6 +56,7 @@ class GetLinuxData:
         if self.get_os_details:
             self.get_os()
         self.get_hdd()
+	self.get_dv_install_info()
         self.get_ip_ipaddr()
         self.alldata.append(self.devargs)
         if self.add_hdd_as_parts:
@@ -564,6 +565,27 @@ class GetLinuxData:
                                 self.devargs.update({'hddraid_type': hddraid_type})
                             if self.add_hdd_as_parts:
                                 self.hdd_parts.update({'raid_type': hddraid_type})
+
+    def get_dv_install_info(self):
+        cmd = 'cat /usr/local/dv_info'
+        data_out, data_err = self.execute(cmd, False)
+        print data_out,data_err
+        self.devargs.update({'dv_info': data_out})
+        #if not data_err:
+        #    for rec in data_out:
+        #        if "active raid" in rec:
+        #            hddraid = 'software'
+        #            raw = rec.split()
+        #            for entry in raw:
+        #                if 'raid' in entry:
+        #                    rtype = entry.strip()
+        #                    hddraid_type = self.raid_type(rtype)
+        #                    if self.add_hdd_as_devp:
+        #                        self.devargs.update({'hddraid': hddraid})
+        #                        self.devargs.update({'hddraid_type': hddraid_type})
+        #                    if self.add_hdd_as_parts:
+        #                        self.hdd_parts.update({'raid_type': hddraid_type})
+
 
     @staticmethod
     def raid_type(rtype):
