@@ -10,11 +10,8 @@ import paramiko
 import util_uploader as uploader
 import util_ip_operations as ipop
 import module_linux as ml
-import module_solaris as ms
 import module_mac as mc
-import module_freebsd as freebsd
-import module_openbsd as openbsd
-import module_aix as aix
+
 
 __version__ = "3.4"
 
@@ -119,23 +116,6 @@ def get_linux_data(ip, usr, pwd):
 	    print data
 
 
-def get_solaris_data(ip, usr, pwd):
-    if mod_solaris:
-        solaris = ms.GetSolarisData(ip, ssh_port, timeout, usr, pwd, use_key_file, key_file,
-                                    get_serial_info, get_hardware_info, get_os_details,
-                                    get_cpu_info, get_memory_info, ignore_domain, upload_ipv6, debug)
-        data = solaris.main()
-        if debug:
-            lock.acquire()
-            print '\nSolaris data: ', data
-            lock.release()
-        if DICT_OUTPUT:
-            return data
-        else:
-            # Upload -----------
-            #upload(data)
-	    print data
-
 
 def get_mac_data(ip, usr, pwd):
     if mod_mac:
@@ -159,57 +139,6 @@ def get_mac_data(ip, usr, pwd):
 	    print data
 
 
-def get_freebsd_data(ip, usr, pwd):
-    if mod_bsd:
-        solaris = freebsd.GetBSDData(ip, ssh_port, timeout, usr, pwd, use_key_file, key_file,
-                                     get_serial_info, get_hardware_info, get_os_details,
-                                     get_cpu_info, get_memory_info, ignore_domain, upload_ipv6, debug)
-        data = solaris.main()
-        if debug:
-            lock.acquire()
-            print 'FreeBSD data: ', data
-            lock.release()
-        if DICT_OUTPUT:
-            return data
-        else:
-            # Upload -----------
-            # upload(data)
-	    print data
-
-def get_openbsd_data(ip, usr, pwd):
-    if mod_bsd:
-        bsd = openbsd.GetBSDData(ip, ssh_port, timeout, usr, pwd, use_key_file, key_file,
-                                 get_serial_info, get_hardware_info, get_os_details,
-                                 get_cpu_info, get_memory_info, ignore_domain, upload_ipv6, debug)
-        data = bsd.main()
-        if debug:
-            lock.acquire()
-            print 'OpenBSD data: ', data
-            lock.release()
-        if DICT_OUTPUT:
-            return data
-        else:
-            # Upload -----------
-            # upload(data)
-	    print data
-
-def get_aix_data(ip, usr, pwd):
-    if mod_aix:
-        ibm = aix.GetAixData(ip, ssh_port, timeout, usr, pwd, use_key_file, key_file,
-                             get_serial_info, get_hardware_info, get_os_details,
-                             get_cpu_info, get_memory_info, ignore_domain, upload_ipv6, debug)
-        data = ibm.main()
-        if debug:
-            lock.acquire()
-            print 'AIX data: ', data
-            lock.release()
-        if DICT_OUTPUT:
-            return data
-        else:
-            # Upload -----------
-            # upload(data)
-	    print data
-
 def process_data(data_out, ip, usr, pwd):
     msg = str(data_out).lower()
     if 'linux' in msg:
@@ -218,36 +147,7 @@ def process_data(data_out, ip, usr, pwd):
         lock.release()
         data = get_linux_data(ip, usr, pwd)
         return data
-    elif 'solaris' in msg or 'sunos' in msg:
-        lock.acquire()
-        print '[+] Solaris running @ %s ' % ip
-        lock.release()
-        data = get_solaris_data(ip, usr, pwd)
-        return data
-    elif 'freebsd' in msg:
-        lock.acquire()
-        print '[+] FreeBSD running @ %s ' % ip
-        lock.release()
-        data = get_freebsd_data(ip, usr, pwd)
-        return data
-    elif 'openbsd' in msg:
-        lock.acquire()
-        print '[+] OpenBSD running @ %s ' % ip
-        lock.release()
-        data = get_openbsd_data(ip, usr, pwd)
-        return data
-    elif 'darwin' in msg:
-        lock.acquire()
-        print '[+] Mac OS X running @ %s' % ip
-        lock.release()
-        data = get_mac_data(ip, usr, pwd)
-        return data
-    elif 'aix' in msg:
-        lock.acquire()
-        print '[+] IBM AIX running @ %s' % ip
-        lock.release()
-        data = get_aix_data(ip, usr, pwd)
-        return data
+
     else:
         lock.acquire()
         print '[!] Connected to SSH @ %s, but the OS cannot be determined.' % ip
@@ -401,6 +301,6 @@ if __name__ == '__main__':
 
     main()
     sys.exit()
-#else:
+else:
     # you can use dict_output if called from external script (starter.py)
-    #from module_shared import *
+    from module_shared import *

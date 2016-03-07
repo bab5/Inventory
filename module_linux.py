@@ -1,6 +1,6 @@
 import ast
 import math
-
+import sys, yaml, json
 import paramiko
 
 
@@ -570,6 +570,7 @@ class GetLinuxData:
         cmd = 'cat /usr/local/dv_info'
         data_out, data_err = self.execute(cmd, False)
         print data_out,data_err
+        data_out = json.dumps(yaml.load(data_out))
         self.devargs.update({'dv_info': data_out})
         #if not data_err:
         #    for rec in data_out:
