@@ -56,7 +56,7 @@ class GetLinuxData:
         if self.get_os_details:
             self.get_os()
         self.get_hdd()
-	self.get_dv_install_info()
+        self.get_dv_install_info()
         self.get_ip_ipaddr()
         self.alldata.append(self.devargs)
         if self.add_hdd_as_parts:
@@ -570,7 +570,6 @@ class GetLinuxData:
         cmd = 'cat /usr/local/dv_info'
         data_out, data_err = self.execute(cmd, False)
         print data_out,data_err
-        data_out = json.dumps(yaml.load(data_out))
         self.devargs.update({'dv_info': data_out})
         #if not data_err:
         #    for rec in data_out:
