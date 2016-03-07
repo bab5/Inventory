@@ -572,6 +572,22 @@ class GetLinuxData:
                             if self.add_hdd_as_parts:
                                 self.hdd_parts.update({'raid_type': hddraid_type})
 
+
+    # [09:50]dhana013@HP-ProBook-4430s ~ > python -c 'import sys, yaml, json;stream_input = open("/home/dhana013/config.yaml"); dataMap=yaml.load(stream_input); print dataMap'
+    # {'other': {'preprocessing_queue': ['preprocessing.scale_and_center', 'preprocessing.dot_reduction', 'preprocessing.connect_lines'], 'use_anonymous': True}, 'mysql': {'passwd': 'my secret password', 'host': 'localhost', 'db': 'write-math', 'user': 'root'}}
+    # [09:50]dhana013@HP-ProBook-4430s ~ > cat /home/dhana013/config.yaml
+    # mysql:
+    #     host: localhost
+    #     user: root
+    #     passwd: my secret password
+    #     db: write-math
+    # other:
+    #     preprocessing_queue:
+    #         - preprocessing.scale_and_center
+    #         - preprocessing.dot_reduction
+    #         - preprocessing.connect_lines
+    #     use_anonymous: yes
+
     def get_dv_install_info(self):
         cmd = 'cat /usr/local/dv_info'
         data_out, data_err = self.execute(cmd, False)
