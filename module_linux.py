@@ -477,8 +477,9 @@ class GetLinuxData:
             if self.add_hdd_as_devp:
                 self.devargs.update({'hddcount': len(hdds)})
             for hdd in hdds:
+                print "let's check hdd = %s" %hdd
                 self.get_hdd_info(hdd)
-                self.get_hdd_info_hdaparm()
+                self.get_hdd_info_hdaparm(hdd)
 
     def get_hdd_names(self):
         hdd_names = []
@@ -520,24 +521,28 @@ class GetLinuxData:
     def get_hdd_info_hdaparm(self, hdd):
         # if hdd not in self.raids:
         cmd = 'hdparm -I %s' % hdd
+
+        device_name=hdd.split('/')[2]
         data_out, data_err = self.execute(cmd, True)
+
         if data_err:
+            print "get_hdd_info_hdaparm error ==> %s" %data_err
             return
         else:
             for rec in data_out:
                 if 'model number' in rec.lower():
                     model = rec.split(':')[1].strip()
                     size = self.disk_sizes[hdd]
-                    self.hdd_parts.update({'device': self.device_name})
-                    self.hdd_parts.update({'name': model})
-                    self.hdd_parts.update({'type': 'hdd'})
-                    self.hdd_parts.update({'hddsize': size})
+                    self.hdd_parts.update({device_name+'_'+'device': self.device_name})
+                    self.hdd_parts.update({device_name+'_'+'name': model})
+                    self.hdd_parts.update({device_name+'_'+'type': 'hdd'})
+                    self.hdd_parts.update({device_name+'_'+'hddsize': size})
                 if 'serial number' in rec.lower():
                     serial = rec.split(':')[1].strip()
-                    self.hdd_parts.update({'serial_no': serial})
+                    self.hdd_parts.update({device_name+'_'+'serial_no': serial})
                 if 'rotation rate' in rec.lower():
                     rpm = rec.split(':')[1].strip()
-                    self.hdd_parts.update({'hddrpm': rpm})
+                    self.hdd_parts.update({device_name+'_'+'hddrpm': rpm})
                 if 'transport:' in rec.lower():
                     if ',' in rec:
                         try:
@@ -546,7 +551,7 @@ class GetLinuxData:
                             transport = (rec.split(',')[-1])
                     else:
                         transport = rec.lower()
-                    self.hdd_parts.update({'hddtype': transport})
+                    self.hdd_parts.update({device_name+'_'+'hddtype': transport})
 
     def get_sw_raids(self):
         cmd = 'cat /proc/mdstat'
