@@ -477,7 +477,6 @@ class GetLinuxData:
             if self.add_hdd_as_devp:
                 self.devargs.update({'hddcount': len(hdds)})
             for hdd in hdds:
-                print "let's check hdd = %s" %hdd
                 self.get_hdd_info(hdd)
                 self.get_hdd_info_hdaparm(hdd)
 

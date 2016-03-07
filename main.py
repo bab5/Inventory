@@ -20,65 +20,6 @@ lock = threading.Lock()
 q = Queue.Queue()
 
 
-def upload(data):
-    ips = []
-    name = None
-    rest = uploader.Rest(base_url, username, secret, debug)
-
-    # get hdd parts if any
-    hdd_parts = {}
-    for rec in data:
-        if 'hdd_parts' in rec:
-            hdd_parts.update(rec['hdd_parts'])
-            data.remove(rec)
-
-    # Upload device first and get name back
-    devindex = None
-    for rec in data:
-        if 'macaddress' not in rec:
-            devindex = data.index(rec)
-    if devindex != None:
-        rec = data[devindex]
-        if duplicate_serials:
-            result, scode = rest.post_multinodes(rec)
-            if scode != 200:
-                print '\n[!] Error! Could not upload devices: %s\n' % str(rec)
-                return
-        else:
-            result, scode = rest.post_device(rec)
-            if scode != 200:
-                print '\n[!] Error! Could not upload device: %s\n' % str(rec)
-                return
-        try:
-            name = result['msg'][2]
-        except IndexError:
-            print '\n[!] Error! Could not get device name from response: %s\n' % str(result)
-            return
-
-    # upload IPs and MACs
-    for rec in data:
-        if 'macaddress' not in rec:
-            pass
-        elif 'ipaddress' in rec:
-            ip = rec['ipaddress']
-            if ip:
-                ips.append(ip)
-            if name and 'device' in rec:
-                rec['device'] = name
-            rest.post_ip(rec)
-        elif 'port_name' in rec:
-            if name and 'device' in rec:
-                rec['device'] = name
-            rest.post_mac(rec)
-
-    # remove unused IPs
-    if REMOVE_STALE_IPS and name:
-        remove_stale_ips(ips, name)
-
-    # upload hdd_parts if any
-    if hdd_parts:
-        rest.post_parts(hdd_parts)
-
 
 def remove_stale_ips(ips, name):
     rest = uploader.Rest(base_url, username, secret, debug)
@@ -104,7 +45,7 @@ def get_linux_data(ip, usr, pwd):
         print "value debug: %s" % debug
         if debug:
             lock.acquire()
-            print '\nLinux data: '
+            #print '\nLinux data: '
             for rec in data:
                 print rec
             lock.release()
@@ -113,7 +54,7 @@ def get_linux_data(ip, usr, pwd):
         else:
             # Upload -----------
             # upload(data)
-	    print data
+	        print data
 
 
 def process_data(data_out, ip, usr, pwd):
