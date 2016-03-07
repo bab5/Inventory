@@ -101,35 +101,12 @@ def get_linux_data(ip, usr, pwd):
                                 ignore_domain, upload_ipv6, give_hostname_precedence, get_dv_install_info, debug)
 
         data = linux.main()
-	print "value debug: %s" % debug
+        print "value debug: %s" % debug
         if debug:
             lock.acquire()
             print '\nLinux data: '
             for rec in data:
                 print rec
-            lock.release()
-        if DICT_OUTPUT:
-            return data
-        else:
-            # Upload -----------
-            # upload(data)
-	    print data
-
-
-
-def get_mac_data(ip, usr, pwd):
-    if mod_mac:
-        lock.acquire()
-        print '[+] Collecting data from: %s' % ip
-        lock.release()
-        mac = mc.GetMacData(base_url, username, secret, ip, ssh_port, timeout, usr, pwd, use_key_file, key_file,
-                            get_serial_info, get_hardware_info, get_os_details,
-                            get_cpu_info, get_memory_info, ignore_domain, upload_ipv6, debug)
-
-        data = mac.main()
-        if debug:
-            lock.acquire()
-            print 'Mac OS X data: ', data
             lock.release()
         if DICT_OUTPUT:
             return data

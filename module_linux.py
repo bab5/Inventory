@@ -478,6 +478,7 @@ class GetLinuxData:
                 self.devargs.update({'hddcount': len(hdds)})
             for hdd in hdds:
                 self.get_hdd_info(hdd)
+                self.get_hdd_info_hdaparm()
 
     def get_hdd_names(self):
         hdd_names = []
