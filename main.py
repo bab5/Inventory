@@ -10,7 +10,6 @@ import paramiko
 import util_uploader as uploader
 import util_ip_operations as ipop
 import module_linux as ml
-import module_mac as mc
 
 
 __version__ = "3.4"
