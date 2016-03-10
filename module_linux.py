@@ -2,6 +2,8 @@ import ast
 import math
 import sys, yaml, json
 import paramiko
+from pysnmp.entity.rfc3413.oneliner import cmdgen
+import time
 
 
 class GetLinuxData:
@@ -161,6 +163,13 @@ class GetLinuxData:
                                                 'Microsoft Corporation', 'Xen', 'innotek GmbH']:
                                 dev_type = 'virtual'
                                 self.devargs.update({'type': dev_type})
+
+                            if 'Dell' in manufacturer:
+                                print "entering snmp check"
+                                raid_controler_name = self.snmpget('1.3.6.1.4.1.674.10893.1.20.130.1.1.2', self.machine_name)
+                                print raid_controler_name
+                                self.devargs.update({'raid_controler_name': raid_controler_name})
+
                         if rec.startswith('UUID:'):
                             uuid = rec.split(':')[1].strip()
                             self.devargs.update({'uuid': uuid})
@@ -384,6 +393,7 @@ class GetLinuxData:
 
     def get_ip_ipaddr(self):
         cmd = 'ip addr show'
+        interfaces_list = []
         data_out, data_err = self.execute(cmd)
         if not data_err and 'command not found' not in data_out[0]:
             macmap = {}
@@ -409,6 +419,7 @@ class GetLinuxData:
                                 macmap.update({nic: mac})
                         except IndexError:
                             pass
+
                 # get nic names and ips
                 elif rec.strip().startswith('inet ') and 'scope global' in rec:
                     inetdata = rec.split()
@@ -434,7 +445,7 @@ class GetLinuxData:
                 macdata = {}
                 if nic in macmap:
                     mac = macmap[nic]
-                    macdata.update({'device': self.device_name})
+                    # macdata.update({'device': self.device_name})
                     macdata.update({'port_name': nic})
                     macdata.update({'macaddress': mac})
                 if nic in ipmap:
@@ -454,12 +465,15 @@ class GetLinuxData:
                         mac = macmap[nic]
                         nicdata_v6.update({'macaddress': mac})
 
-                if nicdata:
-                    self.alldata.append(nicdata)
-                if nicdata_v6:
-                    self.alldata.append(nicdata_v6)
+                # if nicdata:
+                #     self.alldata.append(nicdata)
+                # if nicdata_v6:
+                #     self.alldata.append(nicdata_v6)
                 if macdata:
-                    self.alldata.append(macdata)
+                    interfaces_list.append(macdata)
+
+                self.devargs.update({'interface_list': interfaces_list})
+                #self.alldata.append(interfaces_list)
 
         else:
             if self.debug:
@@ -572,40 +586,46 @@ class GetLinuxData:
                                 self.hdd_parts.update({'raid_type': hddraid_type})
 
 
-    # [09:50]dhana013@HP-ProBook-4430s ~ > python -c 'import sys, yaml, json;stream_input = open("/home/dhana013/config.yaml"); dataMap=yaml.load(stream_input); print dataMap'
-    # {'other': {'preprocessing_queue': ['preprocessing.scale_and_center', 'preprocessing.dot_reduction', 'preprocessing.connect_lines'], 'use_anonymous': True}, 'mysql': {'passwd': 'my secret password', 'host': 'localhost', 'db': 'write-math', 'user': 'root'}}
-    # [09:50]dhana013@HP-ProBook-4430s ~ > cat /home/dhana013/config.yaml
-    # mysql:
-    #     host: localhost
-    #     user: root
-    #     passwd: my secret password
-    #     db: write-math
-    # other:
-    #     preprocessing_queue:
-    #         - preprocessing.scale_and_center
-    #         - preprocessing.dot_reduction
-    #         - preprocessing.connect_lines
-    #     use_anonymous: yes
 
     def get_dv_install_info(self):
         cmd = 'cat /usr/local/dv_info'
+        dv_info_dict = {}
         data_out, data_err = self.execute(cmd, False)
-        print data_out,data_err
-        self.devargs.update({'dv_info': data_out})
-        #if not data_err:
-        #    for rec in data_out:
-        #        if "active raid" in rec:
-        #            hddraid = 'software'
-        #            raw = rec.split()
-        #            for entry in raw:
-        #                if 'raid' in entry:
-        #                    rtype = entry.strip()
-        #                    hddraid_type = self.raid_type(rtype)
-        #                    if self.add_hdd_as_devp:
-        #                        self.devargs.update({'hddraid': hddraid})
-        #                        self.devargs.update({'hddraid_type': hddraid_type})
-        #                    if self.add_hdd_as_parts:
-        #                        self.hdd_parts.update({'raid_type': hddraid_type})
+        # print data_out,data_err
+        for data_out_line in data_out:
+            key1 = str(data_out_line).strip().split('=', 1)[0]
+            value1 = str(data_out_line).strip().split('=', 1)[1]
+            dv_info_dict[key1] = value1
+        self.devargs.update({'dv_info': dv_info_dict})
+
+
+
+    def snmpget(self, oid, machine_name):
+
+        print "entring snmpget function ip=%s and oid=%s" % (machine_name,oid)
+
+        cmdGen = cmdgen.CommandGenerator()
+
+        errorIndication, errorStatus, errorIndex, varBinds = cmdGen.getCmd(
+            cmdgen.CommunityData('public'),
+            cmdgen.UdpTransportTarget((machine_name, 161)),
+            oid
+        )
+
+        # Check for errors and print out results
+        if errorIndication:
+            print(errorIndication)
+        else:
+            if errorStatus:
+                print('%s at %s' % (
+                    errorStatus.prettyPrint(),
+                    errorIndex and varBinds[int(errorIndex)-1] or '?'
+                    )
+                )
+            else:
+                for name, val in varBinds:
+                    #print('%s = %s' % (name.prettyPrint(), val.prettyPrint()))
+                    return str(val)
 
 
     @staticmethod
