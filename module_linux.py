@@ -129,6 +129,7 @@ class GetLinuxData:
     def get_name(self):
         cmd = '/bin/hostname'
         data_out, data_err = self.execute(cmd)
+        get_hostname_info = {}
         device_name = None
         if not data_err:
             if self.ignore_domain:
@@ -136,9 +137,12 @@ class GetLinuxData:
             else:
                 device_name = self.to_ascii(data_out[0].rstrip())
             if device_name != '':
-                self.devargs.update({'hostname1': device_name})
+                get_hostname_info['hostname'] = device_name
                 if self.name_precedence:
-                    self.devargs.update({'hostname': device_name})
+                    get_hostname_info['hostname'] = device_name
+                    self.devargs.update({'hostname_info': get_hostname_info})
+
+                self.devargs.update({'hostname_info': get_hostname_info})
                 return device_name
         return device_name
 
