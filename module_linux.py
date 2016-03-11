@@ -140,9 +140,9 @@ class GetLinuxData:
             else:
                 device_name = self.to_ascii(data_out[0].rstrip())
             if device_name != '':
-                self.devargs.update({'name': device_name})
+                self.devargs.update({'hostname1': device_name})
                 if self.name_precedence:
-                    self.devargs.update({'new_name': device_name})
+                    self.devargs.update({'hostname': device_name})
                 return device_name
         return device_name
 
@@ -150,6 +150,7 @@ class GetLinuxData:
         self.device_name = self.get_name()
         if self.device_name not in ('', None):
             cmd = '/usr/sbin/dmidecode -t system'
+            get_vendor_info = {}
             data_out, data_err = self.execute(cmd, True)
             if not data_err:
                 dev_type = None
@@ -157,28 +158,31 @@ class GetLinuxData:
                     if rec.strip() not in ('\n', ' ', '', None):
                         rec = rec.strip()
                         if rec.startswith('Manufacturer:'):
-                            manufacturer = rec.split(':')[1].strip()
-                            self.devargs.update({'manufacturer': manufacturer})
+                            manufacturer = str(rec.split(':')[1].strip())
+                            get_vendor_info['manufacturer'] =  manufacturer
                             if manufacturer in ['VMware, Inc.', 'Bochs', 'KVM', 'QEMU',
                                                 'Microsoft Corporation', 'Xen', 'innotek GmbH']:
                                 dev_type = 'virtual'
                                 self.devargs.update({'type': dev_type})
 
                             if 'Dell' in manufacturer:
-                                print "entering snmp check"
-                                raid_controler_name = self.snmpget('1.3.6.1.4.1.674.10893.1.20.130.1.1.2', self.machine_name)
-                                print raid_controler_name
-                                self.devargs.update({'raid_controler_name': raid_controler_name})
+                                raid_controller_info = {}
+                                raid_controller_name = self.get_raid_controler_info('1.3.6.1.4.1.674.10893.1.20.130.1.1.2', self.machine_name)
+                                print raid_controller_name
+                                raid_controller_info['raid_controller_name'] = raid_controller_name
+                                self.devargs.update({'raid_controller_info': raid_controller_info})
 
                         if rec.startswith('UUID:'):
-                            uuid = rec.split(':')[1].strip()
-                            self.devargs.update({'uuid': uuid})
+                            uuid = str(rec.split(':')[1].strip())
+                            get_vendor_info['uuid'] =  uuid
                         if rec.startswith('Serial Number:'):
-                            serial = rec.split(':')[1].strip()
-                            self.devargs.update({'serial_no': serial})
+                            serial = str(rec.split(':')[1].strip())
+                            get_vendor_info['service_tag'] = serial
                         if rec.startswith('Product Name:') and dev_type != 'virtual':
-                            hardware = rec.split(':')[1].strip()
-                            self.devargs.update({'hardware': hardware})
+                            hardware = str(rec.split(':')[1].strip())
+                            get_vendor_info['hardware'] = hardware
+
+                        self.devargs.update({'get_vendor_info': get_vendor_info})
             else:
                 if self.debug:
                     print '\t[-] Failed to get sysdata from host: %s using dmidecode. Message was: %s' % \
@@ -205,7 +209,7 @@ class GetLinuxData:
                     serial = rec.split(':')[1].strip()
                     self.devargs.update({'serial_no': serial})
                 if 'product_name:' in rec and dev_type != 'virtual':
-                    hardware = rec.split(':')[1].strip()
+                    hardware = str(rec.split(':')[1].strip())
                     self.devargs.update({'hardware': hardware})
         else:
             if self.debug:
@@ -233,7 +237,7 @@ class GetLinuxData:
                     serial = rec.split('=')[1].split('(')[0].strip()
                     self.devargs.update({'serial_no': serial})
                 if 'system.hardware.product' in rec and dev_type != 'virtual':
-                    hardware = rec.split('=')[1].split('(')[0].strip()
+                    hardware = str(rec.split('=')[1].split('(')[0].strip())
                     self.devargs.update({'hardware': hardware})
         else:
             if self.debug:
@@ -254,21 +258,24 @@ class GetLinuxData:
     def get_os(self):
         cmd = 'python -c "import platform; raw = list(platform.dist());raw.append(platform.release());print raw"'
         data_out, data_err = self.execute(cmd)
+        get_os_info = {}
         if not data_err:
             if 'command not found' not in data_out[0]:  # because some distros sport python3 by default!
                 self.os, ver, release, kernel_version = ast.literal_eval(data_out[0])
-                self.devargs.update({'os': self.os})
-                self.devargs.update({'osver': ver})
-                self.devargs.update({'osverno': kernel_version})
+                get_os_info['os'] = self.os
+                get_os_info['osver'] = ver
+                get_os_info['osverno'] =  kernel_version
+                self.devargs.update({'os_info': get_os_info})
             else:
                 cmd = 'python3 -c "import platform; raw = list(platform.dist());' \
                       'raw.append(platform.release());print (raw)"'
                 data_out, data_err = self.execute(cmd)
                 if not data_err:
                     self.os, ver, release, kernel_version = ast.literal_eval(data_out[0])
-                    self.devargs.update({'os': self.os})
-                    self.devargs.update({'osver': ver})
-                    self.devargs.update({'osverno': kernel_version})
+                    get_os_info['os'] = self.os
+                    get_os_info['osver'] = ver
+                    get_os_info['osverno'] =  kernel_version
+                    self.devargs.update({'os_info': get_os_info})
                 else:
                     if self.debug:
                         print '\t[-] Could not get OS info from host %s. Message was: %s' % (
@@ -281,6 +288,7 @@ class GetLinuxData:
     def get_cpu(self):
         cmd = 'cat /proc/cpuinfo'
         data_out, data_err = self.execute(cmd)
+        get_cpu_info = {}
         if not data_err:
             cpus = 0
             cores = 1
@@ -292,17 +300,23 @@ class GetLinuxData:
                     cpus += 1
                 if rec.startswith('cpu MHz'):
                     cpuspeed = int((float(rec.split(':')[1].strip())))
+                if rec.startswith('model name'):
+                    model_name = (str(rec.split(':')[1].strip()))
                 if rec.startswith('cpu cores'):
                     cores = int(rec.split(':')[1].strip())
                 if rec.startswith('siblings'):
                     threads = int(rec.split(':')[1].strip())
             if siblings and threads:
-                processors = cpus / threads
+                cpu_count = cpus / threads
             else:
-                processors = cpus
-            self.devargs.update({'cpucount': processors})
-            self.devargs.update({'cpucore': cores})
-            self.devargs.update({'cpupower': cpuspeed})
+                cpu_count = cpus
+
+            get_cpu_info['model_name'] = model_name
+            get_cpu_info['cpucount'] = cpu_count
+            get_cpu_info['cpucore'] =  cores
+            get_cpu_info['cpuspeed'] = cpuspeed
+
+            self.devargs.update({'cpu_info': get_cpu_info})
 
         else:
             if self.debug:
@@ -598,6 +612,34 @@ class GetLinuxData:
             dv_info_dict[key1] = value1
         self.devargs.update({'dv_info': dv_info_dict})
 
+
+
+    def get_raid_controler_info(self, oid, machine_name):
+
+        print "entring snmpget function ip=%s and oid=%s" % (machine_name,oid)
+
+        cmdGen = cmdgen.CommandGenerator()
+
+        errorIndication, errorStatus, errorIndex, varBinds = cmdGen.nextCmd(
+            cmdgen.CommunityData('public'),
+            cmdgen.UdpTransportTarget((machine_name, 161)),
+            oid
+        )
+
+        # Check for errors and print out results
+        if errorIndication:
+            print(errorIndication)
+        else:
+            if errorStatus:
+                print('%s at %s' % (
+                    errorStatus.prettyPrint(),
+                    errorIndex and varBinds[int(errorIndex)-1] or '?'
+                    )
+                )
+            else:
+                for name, val in varBinds[0]:
+                    #print('%s = %s' % (name.prettyPrint(), val.prettyPrint()))
+                    return str(val)
 
 
     def snmpget(self, oid, machine_name):
