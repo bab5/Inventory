@@ -55,7 +55,8 @@ class GetLinuxData:
             self.get_os()
         self.get_hdd()
         self.get_dv_install_info()
-        self.get_ip_ipaddr()
+        self.get_ip_ifconfig()
+        #self.get_ip_ipaddr()
         self.alldata.append(self.devargs)
         if self.add_hdd_as_parts:
             self.alldata.append({'hdd_parts': self.hdd_parts})
@@ -327,7 +328,7 @@ class GetLinuxData:
         data_out, data_err = self.execute(cmd)
         if not data_err:
             new = True
-            nic = mac = ip = ip6 = ''
+            nic = mac = ip = ''
             for row in data_out:
                 if row not in ('', '\n', None):
                     if not row.startswith('  '):
@@ -336,7 +337,7 @@ class GetLinuxData:
                             new = False
                         else:
                             if not nic.startswith('lo'):
-                                self.ip_to_json(nic, mac, ip, ip6)
+                                self.ip_to_json(nic, mac, ip)
                             nic = row.split()[0].strip(':')
                             new = True
                         if 'HWaddr ' in row:
@@ -353,55 +354,32 @@ class GetLinuxData:
                             words = row.split()
                             ipindex = words.index('inet') + 1
                             ip = words[ipindex].strip()
-                        # debian/ubuntu
-                        if 'inet6 addr:' in row and row.split()[-1].lower() != 'scope:link':
-                            ip6 = row.split()[2]
-                            if '%' in ip6:
-                                ip6 = ip6.split('%')[0]
-                            if '/' in ip6:
-                                ip6 = ip6.split('/')[0]
-                            if ip6 and ip6 == '::1':
-                                ip6 = ''
-                        # redhat/centos
-                        elif 'inet6 ' in row and 'addr:' not in row and '<link>' not in row and '<host>' not in row:
-                            ip6 = row.split()[1]
-                            if '%' in ip6:
-                                ip6 = ip6.split('%')[0]
-                            if '/' in ip6:
-                                ip6 = ip6.split('/')[0]
-                            if ip6 and ip6 == '::1':
-                                ip6 = ''
+
                         if 'ether ' in row:
                             words = row.split()
                             macindex = words.index('ether') + 1
                             mac = words[macindex].strip()
 
             if not nic.startswith('lo'):
-                self.ip_to_json(nic, mac, ip, ip6)
+                self.ip_to_json(nic, mac, ip)
 
         else:
             if self.debug:
                 print '\t[-] Could not get IP info from host %s. Message was: %s' % (self.machine_name, str(data_err))
 
-    def ip_to_json(self, nic, mac, ip, ip6):
+    def ip_to_json(self, nic, mac, ip):
         macdata = {}
         nicdata = {}
-        nicdata_v6 = {}
         nicdata.update({'device': self.device_name})
-        nicdata_v6.update({'device': self.device_name})
         macdata.update({'device': self.device_name})
         nicdata.update({'tag': nic})
-        nicdata_v6.update({'tag': nic})
         macdata.update({'port_name': nic})
         nicdata.update({'macaddress': mac})
-        nicdata_v6.update({'macaddress': mac})
         macdata.update({'macaddress': mac})
         nicdata.update({'ipaddress': ip})
-        nicdata_v6.update({'ipaddress': ip6})
         # if ip != '':
         self.alldata.append(nicdata)
-        if ip6 != '':
-            self.alldata.append(nicdata_v6)
+
         if mac != '':
             self.alldata.append(macdata)
 
@@ -437,29 +415,22 @@ class GetLinuxData:
                 # get nic names and ips
                 elif rec.strip().startswith('inet ') and 'scope global' in rec:
                     inetdata = rec.split()
-                    ip = inetdata[1].split('/')[0]
+                    ip = str(inetdata[1].split('/')[0])
                     interface = inetdata[-1]
                     if ':' in interface:
                         macmap.update({interface: macmap[interface.split(':')[0]]})
                     nics.append(interface)
                     ipmap.update({interface: ip})
-                elif rec.strip().startswith('inet6 ') and 'scope global' in rec:
-                    inetdata = rec.split()
-                    ip = inetdata[1].split('/')[0]
-                    interface = current_nic
-                    if ':' in interface:
-                        macmap.update({interface: macmap[interface.split(':')[0]]})
-                    nicmap.update({interface: current_nic})
-                    ip6map.update({interface: ip})
+
 
             # jsonize
             for nic in nics:
                 nicdata = {}
-                nicdata_v6 = {}
                 macdata = {}
                 if nic in macmap:
-                    mac = macmap[nic]
+                    mac = str(macmap[nic])
                     # macdata.update({'device': self.device_name})
+                    macdata.update({'ipaddress': ip})
                     macdata.update({'port_name': nic})
                     macdata.update({'macaddress': mac})
                 if nic in ipmap:
@@ -470,19 +441,11 @@ class GetLinuxData:
                     if nic in macmap:
                         mac = macmap[nic]
                         nicdata.update({'macaddress': mac})
-                if nic in ip6map:
-                    ip6 = ip6map[nic]
-                    nicdata_v6.update({'device': self.device_name})
-                    nicdata_v6.update({'tag': nic})
-                    nicdata_v6.update({'ipaddress': ip6})
-                    if nic in macmap:
-                        mac = macmap[nic]
-                        nicdata_v6.update({'macaddress': mac})
+
 
                 # if nicdata:
-                #     self.alldata.append(nicdata)
-                # if nicdata_v6:
-                #     self.alldata.append(nicdata_v6)
+                #      self.alldata.append(nicdata)
+
                 if macdata:
                     interfaces_list.append(macdata)
 
