@@ -43,6 +43,7 @@ class GetLinuxData:
         self.devargs = {}
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.raid_controlleroids = ['.1.3.6.1.4.1.674.10893.1.20.130.1.1.37.1','.1.3.6.1.4.1.674.10893.1.20.130.1.1.37.2']
 
     def main(self):
         self.connect()
@@ -157,6 +158,7 @@ class GetLinuxData:
         if self.device_name not in ('', None):
             cmd = '/usr/sbin/dmidecode -t system'
             get_vendor_info = {}
+            get_physicaldevice_info = {}
             data_out, data_err = self.execute(cmd, True)
             if not data_err:
                 dev_type = None
@@ -173,9 +175,26 @@ class GetLinuxData:
 
                             if 'Dell' in manufacturer:
                                 raid_controller_info = {}
-                                raid_controller_name = self.get_raid_controler_info('1.3.6.1.4.1.674.10893.1.20.130.1.1.2', self.machine_name)
+                                raid_controller_name = self.snmpget('1.3.6.1.4.1.674.10893.1.20.130.1.1.2.1', self.machine_name)
                                 raid_controller_info['raid_controller_name'] = raid_controller_name
                                 self.devargs.update({'raid_controller_info': raid_controller_info})
+
+                                for ControllersOID in self.raid_controlleroids:
+                                    try:
+                                        controllerPhysicalDeviceCount = self.snmpget(ControllersOID, self.machine_name)
+                                        print controllerPhysicalDeviceCount
+
+                                        for PhysicalDevice in range(1, int(controllerPhysicalDeviceCount)):
+                                            get_physicaldevice_info['arrayDiskProductID'] = self.snmpget('iso.3.6.1.4.1.674.10893.1.20.130.4.1.6.'+str(PhysicalDevice), self.machine_name)
+                                            get_physicaldevice_info['arrayDiskSerialNo'] = self.snmpget('iso.3.6.1.4.1.674.10893.1.20.130.4.1.7.'+str(PhysicalDevice), self.machine_name)
+                                            get_physicaldevice_info['channelName'] = self.snmpget('iso.3.6.1.4.1.674.10893.1.20.130.2.1.2.'+str(PhysicalDevice), self.machine_name)
+                                            get_physicaldevice_info['arrayDiskEnclosureConnectionArrayDiskName'] = self.snmpget('iso.3.6.1.4.1.674.10893.1.20.130.5.1.6.'+str(PhysicalDevice), self.machine_name)
+                                            get_physicaldevice_info['arrayDiskEnclosureConnectionEnclosureName'] = self.snmpget('iso.3.6.1.4.1.674.10893.1.20.130.5.1.4.'+str(PhysicalDevice), self.machine_name)
+                                            get_physicaldevice_info['arrayDiskLengthInMB'] = self.snmpget('1.3.6.1.4.1.674.10893.1.20.130.4.1.11.'+str(PhysicalDevice), self.machine_name)
+
+                                        self.devargs.update({'hard_drive_info': get_physicaldevice_info})
+                                    except Exception, e:
+                                        print "we got this exception %s" %e
 
                         if rec.startswith('UUID:'):
                             uuid = str(rec.split(':')[1].strip())
