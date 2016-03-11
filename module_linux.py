@@ -39,6 +39,7 @@ class GetLinuxData:
 
         self.nics = []
         self.alldata = []
+        self.interfacae_list = []
         self.devargs = {}
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -139,9 +140,13 @@ class GetLinuxData:
                 device_name = self.to_ascii(data_out[0].rstrip())
             if device_name != '':
                 get_hostname_info['hostname'] = device_name
+                get_hostname_info['node_ip'] = self.machine_name
+
                 if self.name_precedence:
                     get_hostname_info['hostname'] = device_name
+                    get_hostname_info['node_ip'] = self.machine_name
                     self.devargs.update({'hostname_info': get_hostname_info})
+
 
                 self.devargs.update({'hostname_info': get_hostname_info})
                 return device_name
@@ -314,8 +319,8 @@ class GetLinuxData:
                 cpu_count = cpus
 
             get_cpu_info['model_name'] = model_name
-            get_cpu_info['cpucount'] = cpu_count
-            get_cpu_info['cpuspeed'] = cpuspeed
+            get_cpu_info['no.cpus'] = cpu_count
+            get_cpu_info['cpuspeed-MHz'] = cpuspeed
 
             self.devargs.update({'cpu_info': get_cpu_info})
 
@@ -368,20 +373,16 @@ class GetLinuxData:
                 print '\t[-] Could not get IP info from host %s. Message was: %s' % (self.machine_name, str(data_err))
 
     def ip_to_json(self, nic, mac, ip):
-        macdata = {}
-        nicdata = {}
-        nicdata.update({'device': self.device_name})
-        macdata.update({'device': self.device_name})
-        nicdata.update({'tag': nic})
-        macdata.update({'port_name': nic})
-        nicdata.update({'macaddress': mac})
-        macdata.update({'macaddress': mac})
-        nicdata.update({'ipaddress': ip})
-        # if ip != '':
-        self.alldata.append(nicdata)
 
-        if mac != '':
-            self.alldata.append(macdata)
+        nicdata = {}
+
+        nicdata['port_name'] = str(nic)
+        nicdata['mac_address'] = str(mac)
+        nicdata['ip'] = str(ip)
+
+        self.interfacae_list.append(nicdata)
+        self.devargs.update({'interface_list': self.interfacae_list})
+
 
     def get_ip_ipaddr(self):
         cmd = 'ip addr show'
