@@ -19,10 +19,6 @@ def get_settings():
     # modules
     mod_linux = cc.getboolean('modules', 'linux')
 
-    # settings ------------------------------------------------------------------------
-    base_url = cc.get('settings', 'base_url')
-    username = cc.get('settings', 'username')
-    secret = cc.get('settings', 'secret')
     # targets  ------------------------------------------------------------------------
     targets = cc.get('targets', 'targets')
     exclude_ips = cc.get('targets', 'exclude_ips')
@@ -51,7 +47,7 @@ def get_settings():
     dict_output = cc.getboolean('options', 'dict_output')
     get_dv_install_info = cc.getboolean('options', 'get_dv_install_info')
 
-    return mod_linux, base_url, username, secret, targets, exclude_ips,\
+    return mod_linux, targets, exclude_ips,\
         use_key_file, key_file, credentials, ssh_port, timeout, get_serial_info, duplicate_serials,\
         add_hdd_as_device_properties, add_hdd_as_parts, get_hardware_info, get_os_details, get_cpu_info,\
         get_memory_info, ignore_domain, upload_ipv6, debug, threads, dict_output, give_hostname_precedence,\
@@ -62,7 +58,7 @@ def get_settings():
 caller = os.path.basename(sys._getframe().f_back.f_code.co_filename)
 
 if caller == 'main.py':
-    mod_linux,  base_url, username, secret, targets, exclude_ips, use_key_file,\
+    mod_linux, targets, exclude_ips, use_key_file,\
         key_file, credentials, ssh_port, timeout, get_serial_info, duplicate_serials, add_hdd_as_device_properties,\
         add_hdd_as_parts, get_hardware_info, get_os_details, get_cpu_info, get_memory_info, ignore_domain,\
         upload_ipv6, debug, THREADS, DICT_OUTPUT, give_hostname_precedence, get_dv_install_info, REMOVE_STALE_IPS = get_settings()
@@ -72,7 +68,7 @@ if caller == 'main.py':
 
 else:
     if len(sys.argv) == 5:
-        mod_linux,  base_url, username, secret, xtargets, xexclude_ips,\
+        mod_linux, xtargets, xexclude_ips,\
             xuse_key_file, xkey_file, xcredentials, ssh_port, timeout, get_serial_info, duplicate_serials,\
             add_hdd_as_device_properties, add_hdd_as_parts, get_hardware_info, get_os_details, get_cpu_info,\
             get_memory_info, ignore_domain, upload_ipv6, debug, THREADS, DICT_OUTPUT, get_dv_install_info, give_hostname_precedence,\

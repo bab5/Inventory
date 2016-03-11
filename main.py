@@ -21,7 +21,7 @@ q = Queue.Queue()
 
 
 def remove_stale_ips(ips, name):
-    rest = uploader.Rest(base_url, username, secret, debug)
+    rest = uploader.Rest( debug)
     fetched_ips = rest.get_device_by_name(name)
     ips_to_remove = set(fetched_ips) - set(ips)
     if ips_to_remove:
@@ -35,7 +35,7 @@ def get_linux_data(ip, usr, pwd):
         lock.acquire()
         print '[+] Collecting data from: %s' % ip
         lock.release()
-        linux = ml.GetLinuxData(base_url, username, secret, ip, ssh_port, timeout, usr, pwd, use_key_file, key_file,
+        linux = ml.GetLinuxData(ip, ssh_port, timeout, usr, pwd, use_key_file, key_file,
                                 get_serial_info, add_hdd_as_device_properties, add_hdd_as_parts,
                                 get_hardware_info, get_os_details, get_cpu_info, get_memory_info,
                                 ignore_domain, upload_ipv6, give_hostname_precedence, get_dv_install_info, debug)

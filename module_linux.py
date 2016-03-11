@@ -3,18 +3,14 @@ import math
 import sys, yaml, json
 import paramiko
 from pysnmp.entity.rfc3413.oneliner import cmdgen
-import time
 
 
 class GetLinuxData:
-    def __init__(self, base_url, username, secret, ip, ssh_port, timeout, usr, pwd, use_key_file, key_file,
+    def __init__(self, ip, ssh_port, timeout, usr, pwd, use_key_file, key_file,
                  get_serial_info, add_hdd_as_device_properties, add_hdd_as_parts,
                  get_hardware_info, get_os_details, get_cpu_info, get_memory_info,
                  ignore_domain, upload_ipv6, give_hostname_precedence, get_dv_install_info, debug):
 
-        self.d42_api_url = base_url
-        self.d42_username = username
-        self.d42_password = secret
         self.machine_name = ip
         self.port = int(ssh_port)
         self.timeout = timeout
@@ -163,12 +159,11 @@ class GetLinuxData:
                             if manufacturer in ['VMware, Inc.', 'Bochs', 'KVM', 'QEMU',
                                                 'Microsoft Corporation', 'Xen', 'innotek GmbH']:
                                 dev_type = 'virtual'
-                                self.devargs.update({'type': dev_type})
+                                get_vendor_info['type'] = dev_type
 
                             if 'Dell' in manufacturer:
                                 raid_controller_info = {}
                                 raid_controller_name = self.get_raid_controler_info('1.3.6.1.4.1.674.10893.1.20.130.1.1.2', self.machine_name)
-                                print raid_controller_name
                                 raid_controller_info['raid_controller_name'] = raid_controller_name
                                 self.devargs.update({'raid_controller_info': raid_controller_info})
 
@@ -247,10 +242,12 @@ class GetLinuxData:
     def get_ram(self):
         cmd = 'grep MemTotal /proc/meminfo'
         data_out, data_err = self.execute(cmd)
+        get_ram_info = {}
         if not data_err:
             memory_raw = ''.join(data_out).split()[1]
             memory = self.closest_memory_assumption(int(memory_raw) / 1024)
-            self.devargs.update({'memory': memory})
+            get_ram_info['memory'] =  memory
+            self.devargs.update({'get_ram_info': get_ram_info})
         else:
             if self.debug:
                 print '\t[-] Could not get RAM info from host %s. Message was: %s' % (self.machine_name, str(data_err))
@@ -313,7 +310,6 @@ class GetLinuxData:
 
             get_cpu_info['model_name'] = model_name
             get_cpu_info['cpucount'] = cpu_count
-            get_cpu_info['cpucore'] =  cores
             get_cpu_info['cpuspeed'] = cpuspeed
 
             self.devargs.update({'cpu_info': get_cpu_info})
