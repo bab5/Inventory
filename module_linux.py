@@ -206,7 +206,7 @@ class GetLinuxData:
                             hardware = str(rec.split(':')[1].strip())
                             get_vendor_info['hardware'] = hardware
 
-                        self.devargs.update({'get_vendor_info': get_vendor_info})
+                        self.devargs.update({'HW_vendor_info': get_vendor_info})
             else:
                 if self.debug:
                     print '\t[-] Failed to get sysdata from host: %s using dmidecode. Message was: %s' % \
