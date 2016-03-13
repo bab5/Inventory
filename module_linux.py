@@ -482,6 +482,7 @@ class GetLinuxData:
         # get software raids. Hardware raids are way too complicated to fetch automatically.
         self.get_sw_raids()
         # ==================
+        get_hdd_meta_data_info = []
 
         hdds = self.get_hdd_names()
         if hdds:
@@ -489,7 +490,12 @@ class GetLinuxData:
                 self.devargs.update({'hddcount': len(hdds)})
             for hdd in hdds:
                 self.get_hdd_info(hdd)
-                self.get_hdd_info_hdaparm(hdd)
+                # self.get_hdd_info_hdaparm(hdd)
+                get_hdd_meta_data_info.append(self.get_hdd_info_hdaparm(hdd))
+
+            #print get_hdd_meta_data_info
+            self.devargs.update({'hard_drive_info': get_hdd_meta_data_info})
+
 
     def get_hdd_names(self):
         hdd_names = []
@@ -530,7 +536,6 @@ class GetLinuxData:
 
     def get_hdd_info_hdaparm(self, hdd):
         # if hdd not in self.raids:
-        print "let's check hdd=%s" %hdd
         cmd = 'sudo hdparm -I %s' % hdd
         get_hdd_info_dict = {}
         get_hdd_info_list = {}
@@ -545,30 +550,31 @@ class GetLinuxData:
                 if 'model number' in rec.lower():
                     model = rec.split(':')[1].strip()
                     size = self.disk_sizes[hdd]
-                    get_hdd_info_dict.update({'device': self.device_name})
-                    get_hdd_info_dict.update({'name': model})
-                    get_hdd_info_dict.update({'type': 'hdd'})
-                    get_hdd_info_dict.update({'hddsize': size})
+                    get_hdd_info_dict.update({'hdd_model': str(model)})
+                    get_hdd_info_dict.update({'device_name': str(hdd)})
+                    get_hdd_info_dict.update({'hddsize': str(size)})
                 if 'serial number' in rec.lower():
                     serial = rec.split(':')[1].strip()
-                    get_hdd_info_dict.update({'serial_no': serial})
+                    get_hdd_info_dict.update({'serial_no': str(serial)})
                 if 'rotation rate' in rec.lower():
                     rpm = rec.split(':')[1].strip()
-                    get_hdd_info_dict.update({'hddrpm': rpm})
+                    get_hdd_info_dict.update({'hddrpm': str(rpm)})
                 if 'transport:' in rec.lower():
                     if ',' in rec:
                         try:
                             transport = (rec.split(',')[-1]).split()[0]
-                            get_hdd_info_dict.update({'transport': transport})
+                            get_hdd_info_dict.update({'transport': str(transport)})
                         except IndexError:
                             transport = (rec.split(',')[-1])
-                            get_hdd_info_dict.update({'transport': transport})
+                            get_hdd_info_dict.update({'transport': str(transport)})
                     else:
                         transport = rec.lower()
-                        get_hdd_info_dict.update({'transport': transport})
+                        get_hdd_info_dict.update({'transport': str(transport)})
 
-                print get_hdd_info_dict
-                self.devargs.update({'hddtype': get_hdd_info_dict})
+                #print get_hdd_info_dict
+                get_hdd_info_list.update({str(hdd): get_hdd_info_dict})
+
+            return get_hdd_info_list
 
     def get_sw_raids(self):
         cmd = 'cat /proc/mdstat'
