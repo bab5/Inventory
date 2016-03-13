@@ -53,7 +53,7 @@ def get_linux_data(ip, usr, pwd):
         else:
             # Upload -----------
             # upload(data)
-            print data
+            print {ip:data}
 
 
 def process_data(data_out, ip, usr, pwd):

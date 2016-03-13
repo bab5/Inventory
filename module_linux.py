@@ -182,7 +182,6 @@ class GetLinuxData:
                                 for ControllersOID in self.raid_controlleroids:
                                     try:
                                         controllerPhysicalDeviceCount = self.snmpget(ControllersOID, self.machine_name)
-                                        print controllerPhysicalDeviceCount
 
                                         for PhysicalDevice in range(1, int(controllerPhysicalDeviceCount)):
                                             get_physicaldevice_info['arrayDiskProductID'] = self.snmpget('iso.3.6.1.4.1.674.10893.1.20.130.4.1.6.'+str(PhysicalDevice), self.machine_name)
@@ -192,9 +191,13 @@ class GetLinuxData:
                                             get_physicaldevice_info['arrayDiskEnclosureConnectionEnclosureName'] = self.snmpget('iso.3.6.1.4.1.674.10893.1.20.130.5.1.4.'+str(PhysicalDevice), self.machine_name)
                                             get_physicaldevice_info['arrayDiskLengthInMB'] = self.snmpget('1.3.6.1.4.1.674.10893.1.20.130.4.1.11.'+str(PhysicalDevice), self.machine_name)
 
-                                        self.devargs.update({'hard_drive_info': get_physicaldevice_info})
                                     except Exception, e:
-                                        print "we got this exception %s" %e
+
+                                        print "we got this exception %s" % e
+
+                                print "let's print hard_drive_info for dell Machine = %s" % get_physicaldevice_info
+                                self.devargs.update({'hard_drive_info': get_physicaldevice_info})
+
 
                         if rec.startswith('UUID:'):
                             uuid = str(rec.split(':')[1].strip())
@@ -494,7 +497,7 @@ class GetLinuxData:
                 get_hdd_meta_data_info.append(self.get_hdd_info_hdaparm(hdd))
 
             #print get_hdd_meta_data_info
-            self.devargs.update({'hard_drive_info': get_hdd_meta_data_info})
+            # self.devargs.update({'hard_drive_info': get_hdd_meta_data_info})
 
 
     def get_hdd_names(self):
