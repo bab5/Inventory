@@ -58,6 +58,7 @@ class GetLinuxData:
         self.get_hdd()
         self.get_dv_install_info()
         self.get_ip_ifconfig()
+        self.get_route_info()
         #self.get_ip_ipaddr()
         self.alldata.append(self.devargs)
         if self.add_hdd_as_parts:
@@ -141,7 +142,8 @@ class GetLinuxData:
                 device_name = self.to_ascii(data_out[0].rstrip())
             if device_name != '':
                 get_hostname_info['hostname'] = device_name
-                get_hostname_info['node_ip'] = self.machine_name
+                get_hostname_info['node_ipaddr'] = self.machine_name
+                get_hostname_info['public_ipaddr'] = self.get_public_ipaddr()
 
                 if self.name_precedence:
                     get_hostname_info['hostname'] = device_name
@@ -278,11 +280,24 @@ class GetLinuxData:
         if not data_err:
             memory_raw = ''.join(data_out).split()[1]
             memory = self.closest_memory_assumption(int(memory_raw) / 1024)
-            get_ram_info['memory'] =  memory
-            self.devargs.update({'get_ram_info': get_ram_info})
+            get_ram_info['memory'] = memory
+            self.devargs.update({'ram_info': get_ram_info})
         else:
             if self.debug:
                 print '\t[-] Could not get RAM info from host %s. Message was: %s' % (self.machine_name, str(data_err))
+
+    def get_route_info(self):
+        cmd = '/sbin/route -n'
+        data_out, data_err = self.execute(cmd)
+        get_route_list = []
+        if not data_err:
+            for data in data_out:
+                get_route_list.append(data)
+
+            self.devargs.update({'route_info': {'default_route': ''.join(get_route_list)}})
+
+        else:
+            print "some issue getting route info host  %s. Message was: %s" % (self.machine_name, str(data_err))
 
     def get_os(self):
         cmd = 'python -c "import platform; raw = list(platform.dist());raw.append(platform.release());print raw"'
@@ -404,6 +419,16 @@ class GetLinuxData:
 
         self.interfacae_list.append(nicdata)
         self.devargs.update({'interface_list': self.interfacae_list})
+
+    def get_public_ipaddr(self):
+        cmd = "wget http://ipinfo.io/ip -qO -"
+        data_out, data_err = self.execute(cmd)
+
+        if not data_err:
+            return str(data_out[0].strip())
+        else:
+            print "some issue getting public ipaddr info host  %s. Message was: %s" % (self.machine_name, str(data_err))
+
 
 
     def get_ip_ipaddr(self):
