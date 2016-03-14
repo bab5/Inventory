@@ -55,14 +55,12 @@ class GetLinuxData:
             self.get_cpu()
         if self.get_os_details:
             self.get_os()
-        self.get_hdd()
+        # self.get_hdd()
         self.get_dv_install_info()
         self.get_ip_ifconfig()
         self.get_route_info()
         #self.get_ip_ipaddr()
         self.alldata.append(self.devargs)
-        if self.add_hdd_as_parts:
-            self.alldata.append({'hdd_parts': self.hdd_parts})
 
         return self.alldata
 
@@ -130,6 +128,17 @@ class GetLinuxData:
             v = 2048 * math.ceil(v / 2048.0)
         return int(v)
 
+
+    def sizeof_fmt(self, num, suffix='B'):
+
+        num = num * 1024 * 1024
+
+        for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+            if abs(num) < 1024.0:
+                return "%3.1f%s%s" % (num, unit, suffix)
+            num /= 1024.0
+        return "%.1f%s%s" % (num, 'Yi', suffix)
+
     def get_name(self):
         cmd = '/bin/hostname'
         data_out, data_err = self.execute(cmd)
@@ -144,12 +153,13 @@ class GetLinuxData:
                 get_hostname_info['hostname'] = device_name
                 get_hostname_info['node_ipaddr'] = self.machine_name
                 get_hostname_info['public_ipaddr'] = self.get_public_ipaddr()
+                get_hostname_info['hdd_drive_count'] = len(self.get_hdd_names())
 
                 if self.name_precedence:
                     get_hostname_info['hostname'] = device_name
                     get_hostname_info['node_ip'] = self.machine_name
                     self.devargs.update({'hostname_info': get_hostname_info})
-
+                    get_hostname_info['hdd_drive_count'] = len(self.get_hdd_names())
 
                 self.devargs.update({'hostname_info': get_hostname_info})
                 return device_name
@@ -193,11 +203,12 @@ class GetLinuxData:
                                             get_physicaldevice_info['arrayDiskEnclosureConnectionEnclosureName'] = self.snmpget('iso.3.6.1.4.1.674.10893.1.20.130.5.1.4.'+str(PhysicalDevice), self.machine_name)
                                             get_physicaldevice_info['arrayDiskLengthInMB'] = self.snmpget('1.3.6.1.4.1.674.10893.1.20.130.4.1.11.'+str(PhysicalDevice), self.machine_name)
 
+
                                     except Exception, e:
 
                                         print "we got this exception %s" % e
 
-                                print "let's print hard_drive_info for dell Machine = %s" % get_physicaldevice_info
+                                #print "let's print hard_drive_info for dell Machine = %s" % get_physicaldevice_info
                                 self.devargs.update({'hard_drive_info': get_physicaldevice_info})
 
 
@@ -280,7 +291,7 @@ class GetLinuxData:
         if not data_err:
             memory_raw = ''.join(data_out).split()[1]
             memory = self.closest_memory_assumption(int(memory_raw) / 1024)
-            get_ram_info['memory'] = memory
+            get_ram_info['memory'] = self.sizeof_fmt(memory)
             self.devargs.update({'ram_info': get_ram_info})
         else:
             if self.debug:
@@ -506,23 +517,23 @@ class GetLinuxData:
                       '\n\t\t Message was: %s' % (self.machine_name, str(data_err))
             self.get_ip_ifconfig()
 
-    def get_hdd(self):
-        # get software raids. Hardware raids are way too complicated to fetch automatically.
-        self.get_sw_raids()
-        # ==================
-        get_hdd_meta_data_info = []
-
-        hdds = self.get_hdd_names()
-        if hdds:
-            if self.add_hdd_as_devp:
-                self.devargs.update({'hddcount': len(hdds)})
-            for hdd in hdds:
-                self.get_hdd_info(hdd)
-                # self.get_hdd_info_hdaparm(hdd)
-                get_hdd_meta_data_info.append(self.get_hdd_info_hdaparm(hdd))
-
-            #print get_hdd_meta_data_info
-            # self.devargs.update({'hard_drive_info': get_hdd_meta_data_info})
+    # def get_hdd(self):
+    #     # get software raids. Hardware raids are way too complicated to fetch automatically.
+    #     self.get_sw_raids()
+    #     # ==================
+    #     get_hdd_meta_data_info = []
+    #
+    #     hdds = self.get_hdd_names()
+    #     if hdds:
+    #         if self.add_hdd_as_devp:
+    #             self.devargs.update({'hddcount': len(hdds)})
+    #         for hdd in hdds:
+    #             self.get_hdd_info(hdd)
+    #             # self.get_hdd_info_hdaparm(hdd)
+    #             get_hdd_meta_data_info.append(self.get_hdd_info_hdaparm(hdd))
+    #
+    #         #print get_hdd_meta_data_info
+    #         # self.devargs.update({'hard_drive_info': get_hdd_meta_data_info})
 
 
     def get_hdd_names(self):
